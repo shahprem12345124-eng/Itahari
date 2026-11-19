@@ -15,6 +15,9 @@ export default function ComplaintPage() {
   const [preview, setPreview] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [location, setLocation] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState({ type: "", message: "" });
   const imageInput = useRef(null);
 
   useEffect(() => {
@@ -33,16 +36,57 @@ export default function ComplaintPage() {
       const body = new FormData(form);
       body.delete("image");
       if (image) body.append("image", image);
+      if (location) {
+        body.set("latitude", String(location.latitude));
+        body.set("longitude", String(location.longitude));
+        body.set("accuracy", String(location.accuracy));
+      }
       await apiRequest("/complaints", { method: "POST", body });
       form.reset();
       setImage(null);
       setPreview("");
+      setLocation(null);
+      setLocationStatus({ type: "", message: "" });
       setStatus({ type: "success", message: t("तपाईंको गुनासो सफलतापूर्वक दर्ता भयो। आवश्यक परेमा सम्बन्धित शाखाले तपाईंलाई सम्पर्क गर्नेछ।") });
     } catch (error) {
       setStatus({ type: "error", message: `${t(error.message)} — ${t("कृपया API सर्भर जाँच गर्नुहोस् वा पछि पुनः प्रयास गर्नुहोस्।")}` });
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function requestCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationStatus({ type: "error", message: t("यो ब्राउजरले हालको स्थान पत्ता लगाउने सुविधा समर्थन गर्दैन।") });
+      return;
+    }
+
+    setLocating(true);
+    setLocationStatus({ type: "", message: "" });
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocation({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          accuracy: coords.accuracy,
+        });
+        setLocationStatus({ type: "success", message: t("हालको स्थान थपियो।") });
+        setLocating(false);
+      },
+      (error) => {
+        const messages = {
+          1: "स्थान पहुँच अनुमति अस्वीकार भयो।",
+          2: "हालको स्थान उपलब्ध छैन।",
+          3: "स्थान पत्ता लगाउन धेरै समय लाग्यो।",
+        };
+        setLocationStatus({
+          type: "error",
+          message: t(messages[error.code] || "हालको स्थान प्राप्त गर्न सकिएन।"),
+        });
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
   }
 
   return (
@@ -65,6 +109,19 @@ export default function ComplaintPage() {
               <label className="field"><span>{t("वडा छान्नुहोस्")} <b>*</b></span><select name="ward" required defaultValue=""><option value="" disabled>{t("-- वडा छान्नुहोस् --")}</option>{wards.map((ward, index) => <option key={ward} value={ward}>{language === "en" ? `Ward No. ${index + 1}` : ward}</option>)}</select></label>
               <label className="field"><span>{t("समस्याको विषय")} <b>*</b></span><select name="department" required defaultValue=""><option value="" disabled>{t("-- सम्बन्धित शाखा छान्नुहोस् --")}</option>{departments.map((department) => <option key={department} value={department}>{t(department)}</option>)}</select></label>
               <label className="field full-width"><span>{t("समस्या / सुझावको विस्तृत विवरण")} <b>*</b></span><textarea name="details" placeholder={t("आफ्नो समस्या वा सुझाव यहाँ स्पष्टसँग लेख्नुहोस्...")} rows={5} required minLength={10} maxLength={3000} /></label>
+              <div className="field full-width location-field">
+                <span className="field-label">{t("गुनासोको स्थान")} <small>{t("(वैकल्पिक)")}</small></span>
+                <p>{t("स्थान थप्न बटन थिच्नुहोस्। ब्राउजरको अनुमति आवश्यक हुनेछ; स्थान वैकल्पिक हो।")}</p>
+                <div className="location-control-row">
+                  <button type="button" className="button button-secondary" onClick={requestCurrentLocation} disabled={locating || submitting}>
+                    <Icon name={locating ? "clock" : "mapPin"} size={17} />
+                    {locating ? t("स्थान पत्ता लगाउँदैछ...") : t("हालको स्थान प्रयोग गर्नुहोस्")}
+                  </button>
+                  {location && <button type="button" className="remove-file" onClick={() => { setLocation(null); setLocationStatus({ type: "", message: "" }); }} disabled={submitting}>{t("स्थान हटाउनुहोस्")}</button>}
+                </div>
+                {location && <p className="location-coordinates"><Icon name="check" size={15} /> {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} · ±{Math.round(location.accuracy)} m</p>}
+                {locationStatus.message && <p className={`location-status ${locationStatus.type}`} role={locationStatus.type === "error" ? "alert" : "status"}>{locationStatus.message}</p>}
+              </div>
               <div className="field full-width">
                 <span className="field-label">{t("सम्बन्धित तस्बिर")} <small>{t("(वैकल्पिक, अधिकतम ५ MB)")}</small></span>
                 <label className="upload-field">

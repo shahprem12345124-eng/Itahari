@@ -291,6 +291,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .field input::placeholder, .field textarea::placeholder { color: var(--faint); }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(36,74,145,.1); }
 .full-width { grid-column: 1 / -1; }
+.location-field { padding: 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
+.location-field > p { margin: 0; color: var(--muted); font-size: 10px; font-weight: 500; line-height: 1.7; }
+.location-control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.location-control-row .button { min-height: 39px; font-size: 11px; }
+.location-coordinates { display: flex; align-items: center; gap: 5px; color: var(--green) !important; }
+.location-status.error { color: var(--red-dark); }
+.location-status.success { color: var(--green); }
 .upload-field { min-height: 88px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed var(--line-strong); border-radius: 11px; background: var(--surface-soft); cursor: pointer; }
 .upload-field > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .upload-empty { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--blue); }
@@ -403,6 +410,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .complaint-table td > strong { color: var(--ink); font-size: 11px; }
 .complaint-table td > small { margin-top: 2px; color: var(--muted); font-size: 9px; }
 .complaint-table .admin-row-actions { flex-wrap: nowrap; }
+.complaint-map-link, .complaint-detail-map-link { display: inline-flex; align-items: center; gap: 4px; color: var(--blue); font-size: 10px; font-weight: 750; white-space: nowrap; }
+.complaint-map-link:hover, .complaint-detail-map-link:hover { color: var(--red-dark); }
+.complaint-location-coordinates { overflow-wrap: anywhere; }
 .has-image { display: inline-flex; align-items: center; gap: 5px; color: var(--green); white-space: nowrap; }
 .no-image { color: var(--faint); }
 .mayor-settings { display: flex; align-items: center; gap: 20px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft); }
