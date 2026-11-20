@@ -351,12 +351,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .tourist-place-card { min-width: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow-small); }
 .tourist-place-image-frame { height: 190px; position: relative; overflow: hidden; background: var(--surface-soft); }
 .tourist-place-image { object-fit: cover; }
+.tourist-place-image-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--faint); }
 .tourist-place-number { position: absolute; top: 12px; left: 12px; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,.85); border-radius: 12px; background: var(--red); color: #fff; font-size: 11px; font-weight: 850; box-shadow: 0 3px 12px rgba(0,0,0,.18); }
 .tourist-place-copy { flex: 1; display: flex; flex-direction: column; align-items: flex-start; padding: 18px; }
 .tourist-place-card h2 { margin: 0; font-size: 15px; line-height: 1.65; }
 .tourist-place-card p { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.9; }
 .tourist-place-map { min-height: 39px; display: inline-flex; align-items: center; gap: 7px; margin-top: 16px; padding: 0 11px; border-radius: 9px; background: var(--red-soft); color: var(--red-dark); font-size: 10px; font-weight: 800; transition: background .16s ease, transform .16s ease; }
 .tourist-place-map:hover { background: var(--red); color: #fff; transform: translateY(-1px); }
+.tourist-place-load-error { margin: 20px 0 0; color: var(--red-dark); font-size: 11px; }
+
+.complaint-track-panel { margin-top: 20px; padding: 20px; }
+.complaint-track-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; margin-top: 16px; }
+.complaint-track-form .field { margin: 0; }
+.complaint-track-form .button { min-height: 43px; }
+.complaint-track-error { margin: 12px 0 0; color: var(--red-dark); font-size: 11px; }
+.complaint-track-result { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.complaint-track-result > div { min-width: 150px; display: flex; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
+.complaint-track-result small, .complaint-status-editor span { color: var(--muted); font-size: 10px; }
+.complaint-status { width: fit-content; display: inline-flex; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.complaint-status.pending { background: #fff4d6; color: #8a5a00; }
+.complaint-status.completed { background: #e9f8f2; color: #087352; }
+.complaint-status.cancelled { background: #fff0ef; color: #aa292c; }
+[data-theme="dark"] .complaint-status.pending { background: #44351e; color: #f0c66c; }
+[data-theme="dark"] .complaint-status.completed { background: #1e3936; color: #5ad2a9; }
+[data-theme="dark"] .complaint-status.cancelled { background: #38252d; color: #ff8989; }
+.complaint-reference-id { display: inline-block; margin: 3px 0 0 4px; padding: 3px 7px; border-radius: 6px; background: rgba(8,115,82,.1); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
 
 .admin-container { max-width: 1050px; }
 .admin-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 21px; }
@@ -452,6 +471,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .complaint-modal-backdrop { padding: 14px; }
 .complaint-detail-dialog { width: min(880px, 100%); max-height: 95vh; }
 .complaint-detail-content { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-top: 17px; }
+.complaint-status-editor { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; }
+.complaint-status-editor select { min-height: 36px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-soft); color: var(--ink); }
 .complaint-detail-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; align-content: start; }
 .complaint-detail-meta > div, .complaint-detail-description { display: flex; flex-direction: column; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
 .complaint-detail-meta small, .complaint-detail-description small { color: var(--muted); font-size: 9px; }
@@ -641,6 +662,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .tourist-place-image-frame { height: 210px; }
   .tourist-place-copy { padding: 16px; }
   .tourist-place-card h2 { font-size: 14px; }
+  .complaint-track-panel { padding: 15px; }
+  .complaint-track-form { grid-template-columns: 1fr; }
+  .complaint-track-form .button { width: 100%; }
   .admin-heading { align-items: flex-start; }
   .admin-heading h1 { font-size: 28px; }
   .admin-heading > .button { min-height: 36px; padding-inline: 9px; font-size: 10px; }

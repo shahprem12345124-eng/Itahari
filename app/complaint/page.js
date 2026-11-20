@@ -8,6 +8,11 @@ import { useLanguage } from "../components/LanguageProvider";
 
 const wards = Array.from({ length: 20 }, (_, index) => `वडा नं. ${index + 1}`);
 const departments = ["सडक तथा भौतिक पूर्वाधार", "खानेपानी तथा सरसफाइ", "स्वास्थ्य सेवा", "शिक्षा", "फोहोर व्यवस्थापन", "वातावरण तथा विपद्", "अन्य"];
+const complaintStatusLabels = {
+  pending: "विचाराधीन",
+  completed: "सम्पन्न",
+  cancelled: "रद्द",
+};
 
 export default function ComplaintPage() {
   const { language, t } = useLanguage();
@@ -18,6 +23,10 @@ export default function ComplaintPage() {
   const [location, setLocation] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState({ type: "", message: "" });
+  const [trackingId, setTrackingId] = useState("");
+  const [trackedComplaint, setTrackedComplaint] = useState(null);
+  const [trackingError, setTrackingError] = useState("");
+  const [trackingLoading, setTrackingLoading] = useState(false);
   const imageInput = useRef(null);
 
   useEffect(() => {
@@ -41,7 +50,9 @@ export default function ComplaintPage() {
         body.set("longitude", String(location.longitude));
         body.set("accuracy", String(location.accuracy));
       }
-      await apiRequest("/complaints", { method: "POST", body });
+      const response = await apiRequest("/complaints", { method: "POST", body });
+      setTrackingId(response.data?._id || "");
+      setTrackedComplaint(null);
       form.reset();
       setImage(null);
       setPreview("");
@@ -52,6 +63,22 @@ export default function ComplaintPage() {
       setStatus({ type: "error", message: `${t(error.message)} — ${t("कृपया API सर्भर जाँच गर्नुहोस् वा पछि पुनः प्रयास गर्नुहोस्।")}` });
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function trackComplaint(event) {
+    event.preventDefault();
+    const id = trackingId.trim();
+    setTrackingError("");
+    setTrackedComplaint(null);
+    setTrackingLoading(true);
+    try {
+      const response = await apiRequest(`/complaints/track/${encodeURIComponent(id)}`);
+      setTrackedComplaint(response.data);
+    } catch (error) {
+      setTrackingError(t(error.message));
+    } finally {
+      setTrackingLoading(false);
     }
   }
 
@@ -101,7 +128,7 @@ export default function ComplaintPage() {
             <span className="panel-heading-icon red"><Icon name="form" size={21} /></span>
             <div><h2>{t("अनलाइन गुनासो तथा सुझाव फारम")}</h2><p>{t("ताराङ्कित (*) भएका विवरणहरू अनिवार्य छन्।")}</p></div>
           </div>
-          {status.message && <div className={`form-alert ${status.type}`} role="status"><Icon name={status.type === "success" ? "check" : "info"} size={18} /> {status.message}</div>}
+          {status.message && <div className={`form-alert ${status.type}`} role="status"><Icon name={status.type === "success" ? "check" : "info"} size={18} /><span>{status.message}{status.type === "success" && trackingId && <> {t("गुनासो ट्र्याक गर्न यो नम्बर सुरक्षित राख्नुहोस्")} <strong className="complaint-reference-id">{trackingId}</strong></>}</span></div>}
           <form onSubmit={submitComplaint} className="complaint-form">
             <div className="form-grid">
               <label className="field"><span>{t("पूरा नाम")} <b>*</b></span><input name="fullName" type="text" placeholder={t("तपाईंको नाम")} required maxLength={100} /></label>
@@ -160,6 +187,21 @@ export default function ComplaintPage() {
           <section className="panel help-panel"><span className="help-panel-icon"><Icon name="info" size={20} /></span><h3>{t("गुनासो दर्ता गरेपछि")}</h3><p>{t("तपाईंको विवरण सम्बन्धित शाखामा पठाइनेछ। आफ्नो फोन खुला राख्नुहोस्, आवश्यक परेमा थप जानकारीका लागि सम्पर्क गरिनेछ।")}</p></section>
         </aside>
       </div>
+      <section className="panel complaint-track-panel">
+        <div className="panel-heading">
+          <span className="panel-heading-icon blue"><Icon name="search" size={21} /></span>
+          <div><h2>{t("गुनासोको अवस्था हेर्नुहोस्")}</h2><p>{t("दर्ता गरेपछि प्राप्त सन्दर्भ नम्बर प्रयोग गर्नुहोस्।")}</p></div>
+        </div>
+        <form className="complaint-track-form" onSubmit={trackComplaint}>
+          <label className="field"><span>{t("गुनासो सन्दर्भ नम्बर")}</span><input value={trackingId} onChange={(event) => setTrackingId(event.target.value)} placeholder={t("२४ अक्षरको सन्दर्भ नम्बर")} minLength={24} maxLength={24} pattern="[a-fA-F0-9]{24}" title={t("२४ वर्णको हेक्साडेसिमल सन्दर्भ नम्बर लेख्नुहोस्।")} required /></label>
+          <button type="submit" className="button button-primary" disabled={trackingLoading}><Icon name={trackingLoading ? "clock" : "search"} size={17} />{trackingLoading ? t("खोज्दैछ...") : t("अवस्था हेर्नुहोस्")}</button>
+        </form>
+        {trackingError && <p className="complaint-track-error" role="alert">{trackingError}</p>}
+        {trackedComplaint && <div className="complaint-track-result" role="status">
+          <div><small>{t("दर्ता मिति")}</small><strong>{new Date(trackedComplaint.createdAt).toLocaleDateString(language === "en" ? "en-US" : "ne-NP")}</strong></div>
+          <div><small>{t("हालको अवस्था")}</small><strong className={`complaint-status ${trackedComplaint.status}`}>{t(complaintStatusLabels[trackedComplaint.status] || complaintStatusLabels.pending)}</strong></div>
+        </div>}
+      </section>
     </div>
   );
 }
