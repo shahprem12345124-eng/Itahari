@@ -125,7 +125,6 @@ export default function AdminPage() {
     const form = event.currentTarget;
     const body = new FormData(form);
     const currentPassword = body.get("currentPassword");
-    const changeSecret = body.get("changeSecret");
     const newPassword = body.get("newPassword");
     const confirmPassword = body.get("confirmPassword");
 
@@ -141,7 +140,7 @@ export default function AdminPage() {
       await adminApiRequest("/admin/change-password", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, changeSecret, newPassword }),
+        body: JSON.stringify({ currentPassword, newPassword }),
       });
       form.reset();
       window.sessionStorage.removeItem("itahari-admin-access");
@@ -389,10 +388,9 @@ export default function AdminPage() {
           </form>
           <section className="admin-password-settings">
             <h3>{t("प्रशासक पासफ्रेज परिवर्तन")}</h3>
-            <p>{t("पासफ्रेज परिवर्तन गर्न हालको पासफ्रेज र सर्भरमा सेट गरिएको परिवर्तन गोप्य संकेत चाहिन्छ। नयाँ पासफ्रेज कम्तीमा १२ वर्णको हुनुपर्छ।")}</p>
+            <p>{t("पासफ्रेज परिवर्तन गर्न हालको प्रशासक सत्र र हालको पासफ्रेज चाहिन्छ। नयाँ पासफ्रेज कम्तीमा १२ वर्णको हुनुपर्छ।")}</p>
             <form className="admin-password-form" onSubmit={changeAdminPassword} autoComplete="off">
               <label className="field"><span>{t("हालको पासफ्रेज")}</span><input type="password" name="currentPassword" autoComplete="off" required maxLength={256} /></label>
-              <label className="field"><span>{t("परिवर्तन गोप्य संकेत")}</span><input type="password" name="changeSecret" autoComplete="off" required maxLength={256} /></label>
               <label className="field"><span>{t("नयाँ पासफ्रेज")}</span><input type="password" name="newPassword" autoComplete="off" required minLength={12} maxLength={256} /></label>
               <label className="field"><span>{t("नयाँ पासफ्रेज पुष्टि गर्नुहोस्")}</span><input type="password" name="confirmPassword" autoComplete="off" required minLength={12} maxLength={256} /></label>
               <button type="submit" className="button button-primary password-change-submit" disabled={savingAdminPassword}><Icon name="check" size={16} /> {savingAdminPassword ? t("सुरक्षित गर्दै...") : t("पासफ्रेज परिवर्तन गर्नुहोस्")}</button>
