@@ -61,6 +61,7 @@ export default function AdminPage() {
   const [savingMayor, setSavingMayor] = useState(false);
   const [mayorProfile, setMayorProfile] = useState(emptyMayorProfile);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [savingAdminPassword, setSavingAdminPassword] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -97,6 +98,7 @@ export default function AdminPage() {
   async function unlockAdmin(event) {
     event.preventDefault();
     setPageError("");
+    setPageMessage("");
     setLoading(true);
     try {
       const response = await apiRequest("/admin/verify", {
@@ -115,6 +117,41 @@ export default function AdminPage() {
       setPageError(error.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function changeAdminPassword(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const body = new FormData(form);
+    const currentPassword = body.get("currentPassword");
+    const changeSecret = body.get("changeSecret");
+    const newPassword = body.get("newPassword");
+    const confirmPassword = body.get("confirmPassword");
+
+    if (newPassword !== confirmPassword) {
+      setPageError(t("नयाँ पासफ्रेज र पुष्टि पासफ्रेज मिलेनन्।"));
+      return;
+    }
+
+    setPageError("");
+    setPageMessage("");
+    setSavingAdminPassword(true);
+    try {
+      await adminApiRequest("/admin/change-password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, changeSecret, newPassword }),
+      });
+      form.reset();
+      window.sessionStorage.removeItem("itahari-admin-access");
+      window.sessionStorage.removeItem("itahari-admin-token");
+      setPageMessage(t("पासफ्रेज परिवर्तन भयो। नयाँ पासफ्रेजले पुनः प्रवेश गर्नुहोस्।"));
+      window.dispatchEvent(new Event("itahari-admin-access-change"));
+    } catch (error) {
+      setPageError(t(error.message));
+    } finally {
+      setSavingAdminPassword(false);
     }
   }
 
@@ -281,6 +318,7 @@ export default function AdminPage() {
           <h1>{t("प्रशासक प्यानलमा प्रवेश")}</h1>
           <p>{t("जारी राख्न नगरपालिकाको प्रशासक पासफ्रेज प्रविष्ट गर्नुहोस्।")}</p>
           {pageError && <div className="form-alert error" role="alert"><Icon name="info" size={17} /> {pageError}</div>}
+          {pageMessage && <div className="form-alert success" role="status"><Icon name="check" size={17} /> {pageMessage}</div>}
           <form onSubmit={unlockAdmin} className="admin-gate-form" autoComplete="off">
             <label className="field"><span>{t("पासफ्रेज")}</span><input type="password" autoComplete="off" value={password} onChange={(event) => setPassword(event.target.value)} required autoFocus /></label>
             <button type="submit" className="button button-primary submit-button" disabled={loading}>{loading ? t("जाँच हुँदैछ...") : t("प्रवेश गर्नुहोस्")} <Icon name="arrow" size={17} /></button>
@@ -349,9 +387,20 @@ export default function AdminPage() {
             <label className="field profile-contact-field"><span>{t("सम्पर्क विवरण अंग्रेजीमा")}</span><input value={mayorProfile.mayorContactEn} onChange={(event) => updateMayorProfile("mayorContactEn", event.target.value)} maxLength={200} /></label>
             <button type="submit" className="button button-primary profile-save" disabled={savingProfile}><Icon name="check" size={16} /> {savingProfile ? t("जाँच हुँदैछ...") : t("परिवर्तन सुरक्षित गर्नुहोस्")}</button>
           </form>
+          <section className="admin-password-settings">
+            <h3>{t("प्रशासक पासफ्रेज परिवर्तन")}</h3>
+            <p>{t("पासफ्रेज परिवर्तन गर्न हालको पासफ्रेज र सर्भरमा सेट गरिएको परिवर्तन गोप्य संकेत चाहिन्छ। नयाँ पासफ्रेज कम्तीमा १२ वर्णको हुनुपर्छ।")}</p>
+            <form className="admin-password-form" onSubmit={changeAdminPassword} autoComplete="off">
+              <label className="field"><span>{t("हालको पासफ्रेज")}</span><input type="password" name="currentPassword" autoComplete="off" required maxLength={256} /></label>
+              <label className="field"><span>{t("परिवर्तन गोप्य संकेत")}</span><input type="password" name="changeSecret" autoComplete="off" required maxLength={256} /></label>
+              <label className="field"><span>{t("नयाँ पासफ्रेज")}</span><input type="password" name="newPassword" autoComplete="off" required minLength={12} maxLength={256} /></label>
+              <label className="field"><span>{t("नयाँ पासफ्रेज पुष्टि गर्नुहोस्")}</span><input type="password" name="confirmPassword" autoComplete="off" required minLength={12} maxLength={256} /></label>
+              <button type="submit" className="button button-primary password-change-submit" disabled={savingAdminPassword}><Icon name="check" size={16} /> {savingAdminPassword ? t("सुरक्षित गर्दै...") : t("पासफ्रेज परिवर्तन गर्नुहोस्")}</button>
+            </form>
+          </section>
         </section>}
       </div>
-      <p className="demo-disclaimer admin-disclaimer"><Icon name="info" size={15} /> {t("पासफ्रेजले यो पृष्ठ मात्र खोल्छ; यो परियोजनामा पूर्ण प्रमाणीकरण वा role-based API सुरक्षा छैन। सार्वजनिक deployment अघि सुरक्षा लागू गर्नुहोस्।")}</p>
+      <p className="demo-disclaimer admin-disclaimer"><Icon name="info" size={15} /> {t("प्रशासकीय अनुरोधहरू समयसीमित टोकनद्वारा सुरक्षित छन्। ब्राउजरले स्वतः भर्ने रोकथामका संकेत बेवास्ता गर्न सक्छ।")}</p>
 
       {newsEditor && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setNewsEditor(null); }}>
         <section className="dialog-card" role="dialog" aria-modal="true" aria-labelledby="news-editor-title">
