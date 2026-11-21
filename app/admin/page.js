@@ -49,6 +49,7 @@ export default function AdminPage() {
   const [news, setNews] = useState([]);
   const [touristPlaces, setTouristPlaces] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [complaintFilter, setComplaintFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [pageError, setPageError] = useState("");
   const [pageMessage, setPageMessage] = useState("");
@@ -308,6 +309,15 @@ export default function AdminPage() {
     setMayorProfile((profile) => ({ ...profile, [field]: value }));
   }
 
+  const complaintStatusCounts = complaints.reduce((counts, complaint) => {
+    const status = complaint.status || "pending";
+    counts[status] = (counts[status] || 0) + 1;
+    return counts;
+  }, { pending: 0, completed: 0, cancelled: 0 });
+  const filteredComplaints = complaintFilter === "all"
+    ? complaints
+    : complaints.filter((complaint) => (complaint.status || "pending") === complaintFilter);
+
   if (!unlocked) {
     return (
       <div className="container admin-gate-wrap">
@@ -341,6 +351,21 @@ export default function AdminPage() {
         <div className="admin-stat-card"><span className="admin-stat-icon green"><Icon name="check" size={19} /></span><span><strong>{t("सक्रिय")}</strong><small>{t("नागरिक सेवा पोर्टल")}</small></span></div>
       </div>
 
+      <div className="complaint-stat-grid" aria-label={t("गुनासोको अवस्था सारांश")}>
+        <button type="button" className={`complaint-stat-card ${complaintFilter === "all" ? "selected" : ""}`} onClick={() => { setComplaintFilter("all"); setActiveTab("complaints"); }}>
+          <span className="admin-stat-icon blue"><Icon name="form" size={18} /></span><span><strong>{complaints.length}</strong><small>{t("सबै गुनासो")}</small></span>
+        </button>
+        <button type="button" className={`complaint-stat-card ${complaintFilter === "pending" ? "selected" : ""}`} onClick={() => { setComplaintFilter("pending"); setActiveTab("complaints"); }}>
+          <span className="admin-stat-icon amber"><Icon name="clock" size={18} /></span><span><strong>{complaintStatusCounts.pending}</strong><small>{t("विचाराधीन")}</small></span>
+        </button>
+        <button type="button" className={`complaint-stat-card ${complaintFilter === "completed" ? "selected" : ""}`} onClick={() => { setComplaintFilter("completed"); setActiveTab("complaints"); }}>
+          <span className="admin-stat-icon green"><Icon name="check" size={18} /></span><span><strong>{complaintStatusCounts.completed}</strong><small>{t("सम्पन्न")}</small></span>
+        </button>
+        <button type="button" className={`complaint-stat-card ${complaintFilter === "cancelled" ? "selected" : ""}`} onClick={() => { setComplaintFilter("cancelled"); setActiveTab("complaints"); }}>
+          <span className="admin-stat-icon red"><Icon name="close" size={18} /></span><span><strong>{complaintStatusCounts.cancelled}</strong><small>{t("रद्द")}</small></span>
+        </button>
+      </div>
+
       {pageError && <div className="form-alert error admin-alert" role="alert"><Icon name="info" size={17} /> {pageError}<button type="button" onClick={() => setPageError("")} aria-label={t("सन्देश बन्द गर्नुहोस्")}><Icon name="close" size={15} /></button></div>}
       {pageMessage && <div className="form-alert success admin-alert" role="status"><Icon name="check" size={17} /> {pageMessage}<button type="button" onClick={() => setPageMessage("")} aria-label={t("सन्देश बन्द गर्नुहोस्")}><Icon name="close" size={15} /></button></div>}
 
@@ -359,7 +384,17 @@ export default function AdminPage() {
 
         {activeTab === "complaints" && <section className="admin-tab-content">
           <div className="admin-section-heading"><div><h2>{t("नागरिकका गुनासो")}</h2><p>{t("दर्ता भएका समस्या र संलग्न तस्बिरहरू हेर्नुहोस्।")}</p></div><button type="button" className="button button-secondary" onClick={loadData}><Icon name="clock" size={16} /> {t("नवीकरण")}</button></div>
-          {loading && !complaints.length ? <div className="admin-empty">{t("गुनासो लोड हुँदैछ...")}</div> : complaints.length ? <div className="complaint-table-wrap"><table className="complaint-table"><thead><tr><th>{t("नागरिक")}</th><th>{t("वडा / विषय")}</th><th>{t("दर्ता मिति")}</th><th>{t("स्थान")}</th><th>{t("तस्बिर")}</th><th>{t("कार्य")}</th></tr></thead><tbody>{complaints.map((item) => <tr key={item._id}><td><strong>{item.fullName}</strong><small>{item.phone}</small></td><td><strong>{item.ward}</strong><small>{t(item.department)}</small></td><td>{item.createdAt ? new Date(item.createdAt).toLocaleDateString(language === "en" ? "en-US" : "ne-NP") : "—"}</td><td>{hasComplaintLocation(item.location) ? <a className="complaint-map-link" href={complaintMapUrl(item.location)} target="_blank" rel="noopener noreferrer" aria-label={`${t("नक्सामा स्थान खोल्नुहोस्")}: ${item.fullName}`}><Icon name="mapPin" size={14} /> {t("नक्सा")}</a> : <span className="no-image">—</span>}</td><td>{item.image ? <span className="has-image"><Icon name="image" size={15} /> {t("संलग्न")}</span> : <span className="no-image">{t("छैन")}</span>}</td><td><div className="admin-row-actions"><button type="button" className="icon-button action-view" aria-label={t("गुनासो हेर्नुहोस्")} onClick={() => showComplaint(item)}><Icon name="eye" size={17} /></button><button type="button" className="icon-button action-delete" aria-label={t("गुनासो हटाउनुहोस्")} onClick={() => deleteComplaint(item)}><Icon name="trash" size={17} /></button></div></td></tr>)}</tbody></table></div> : <div className="admin-empty"><Icon name="form" size={22} /> {t("हालसम्म कुनै गुनासो प्राप्त भएको छैन।")}</div>}
+          <div className="complaint-filter-bar" role="group" aria-label={t("गुनासो फिल्टर गर्नुहोस्")}>
+            {[["all", "सबै"], ["pending", "विचाराधीन"], ["completed", "सम्पन्न"], ["cancelled", "रद्द"]].map(([value, label]) => (
+              <button type="button" key={value} className={complaintFilter === value ? "selected" : ""} onClick={() => setComplaintFilter(value)}>
+                {t(label)} <span>{value === "all" ? complaints.length : complaintStatusCounts[value]}</span>
+              </button>
+            ))}
+          </div>
+          {loading && !complaints.length ? <div className="admin-empty">{t("गुनासो लोड हुँदैछ...")}</div> : filteredComplaints.length ? <div className="complaint-table-wrap"><table className="complaint-table"><thead><tr><th>{t("नागरिक")}</th><th>{t("वडा / विषय")}</th><th>{t("दर्ता मिति")}</th><th>{t("अवस्था")}</th><th>{t("स्थान")}</th><th>{t("तस्बिर")}</th><th>{t("कार्य")}</th></tr></thead><tbody>{filteredComplaints.map((item) => {
+            const status = item.status || "pending";
+            return <tr key={item._id}><td><strong>{item.fullName}</strong><small>{item.phone}</small></td><td><strong>{item.ward}</strong><small>{t(item.department)}</small></td><td>{item.createdAt ? new Date(item.createdAt).toLocaleDateString(language === "en" ? "en-US" : "ne-NP") : "—"}</td><td><span className={`complaint-status ${status}`}>{t(complaintStatuses[status] || complaintStatuses.pending)}</span></td><td>{hasComplaintLocation(item.location) ? <a className="complaint-map-link" href={complaintMapUrl(item.location)} target="_blank" rel="noopener noreferrer" aria-label={`${t("नक्सामा स्थान खोल्नुहोस्")}: ${item.fullName}`}><Icon name="mapPin" size={14} /> {t("नक्सा")}</a> : <span className="no-image">—</span>}</td><td>{item.image ? <span className="has-image"><Icon name="image" size={15} /> {t("संलग्न")}</span> : <span className="no-image">{t("छैन")}</span>}</td><td><div className="admin-row-actions"><button type="button" className="icon-button action-view" aria-label={t("गुनासो हेर्नुहोस्")} onClick={() => showComplaint(item)}><Icon name="eye" size={17} /></button><button type="button" className="icon-button action-delete" aria-label={t("गुनासो हटाउनुहोस्")} onClick={() => deleteComplaint(item)}><Icon name="trash" size={17} /></button></div></td></tr>;
+          })}</tbody></table></div> : <div className="admin-empty"><Icon name="form" size={22} /> {t("यस अवस्थामा कुनै गुनासो भेटिएन।")}</div>}
         </section>}
 
         {activeTab === "places" && <section className="admin-tab-content">
