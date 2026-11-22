@@ -77,11 +77,36 @@ export default function Home() {
             <button type="button" className="important-notice-close" onClick={dismissNotice} aria-label={t("सूचना बन्द गर्नुहोस्")}>
               <Icon name="close" size={20} />
             </button>
-            <span className="important-notice-icon"><Icon name="bell" size={28} /></span>
+            {noticeNews.image ? (
+              <Link
+                href={`/news#news-${noticeNews._id || ""}`}
+                className="important-notice-image"
+                onClick={dismissNotice}
+                aria-label={t("समाचार हेर्नुहोस्")}
+              >
+                <Image
+                  src={imageUrl(noticeNews.image)}
+                  alt={language === "en" ? noticeNews.titleEn || noticeNews.title : noticeNews.title}
+                  fill
+                  sizes="(max-width: 680px) calc(100vw - 24px), 520px"
+                  unoptimized
+                />
+              </Link>
+            ) : (
+              <span className="important-notice-icon"><Icon name="bell" size={28} /></span>
+            )}
             <span className="eyebrow">{t("महत्वपूर्ण सूचना")}</span>
             <h2 id="important-notice-title">{language === "en" ? noticeNews.titleEn || noticeNews.title : noticeNews.title}</h2>
             <p>{language === "en" ? noticeNews.summaryEn || noticeNews.summary : noticeNews.summary}</p>
             {noticeNews.content && <div className="important-notice-content">{language === "en" ? noticeNews.contentEn || noticeNews.content : noticeNews.content}</div>}
+            <Link
+              href={`/news#news-${noticeNews._id || ""}`}
+              className="button button-primary important-notice-link"
+              onClick={dismissNotice}
+            >
+              <Icon name="news" size={17} />
+              {t("समाचार हेर्नुहोस्")}
+            </Link>
           </section>
         </div>
       )}
