@@ -327,7 +327,22 @@ export default function AdminPage() {
           <p>{t("जारी राख्न नगरपालिकाको प्रशासक पासफ्रेज प्रविष्ट गर्नुहोस्।")}</p>
           {pageError && <div className="form-alert error" role="alert"><Icon name="info" size={17} /> {pageError}</div>}
           <form onSubmit={unlockAdmin} className="admin-gate-form" autoComplete="off">
-            <label className="field"><span>{t("पासफ्रेज")}</span><input type="password" name="admin-passphrase" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required autoFocus /></label>
+            <label className="field">
+              <span>{t("पासफ्रेज")}</span>
+              <input
+                className="admin-passphrase"
+                type="text"
+                name="municipal-admin-passphrase"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore
+                spellCheck="false"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                autoFocus
+              />
+            </label>
             <button type="submit" className="button button-primary submit-button" disabled={loading}>{loading ? t("जाँच हुँदैछ...") : t("प्रवेश गर्नुहोस्")} <Icon name="arrow" size={17} /></button>
           </form>
           <div className="demo-disclaimer"><Icon name="info" size={15} /> {t("प्रशासकीय अनुरोधहरू समयसीमित टोकनद्वारा सुरक्षित छन्। पासफ्रेज गोप्य राख्नुहोस्।")}</div>
