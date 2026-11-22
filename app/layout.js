@@ -16,9 +16,6 @@ export const metadata = {
   authors: [{ name: siteName }],
   creator: siteName,
   publisher: siteName,
-  verification: {
-    google: "OPfT6LqLs7bXWoydjV-849xCtOWrXE6z5t9EegYsmgo",
-  },
   keywords: [
     "इटहरी उपमहानगरपालिका",
     "इटहरी नागरिक सेवा",
