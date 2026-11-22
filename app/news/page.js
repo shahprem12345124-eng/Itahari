@@ -55,7 +55,11 @@ export default function NewsPage() {
 
       {filtered.length ? <div className="news-grid news-list-grid">
         {filtered.map((item, index) => (
-          <article className="news-card" key={item._id || item.title}>
+          <article
+            className="news-card"
+            id={`news-${item._id || ""}`}
+            key={item._id || item.title}
+          >
             {item.image ? <div className="news-card-image"><Image src={imageUrl(item.image)} alt="" width={900} height={600} unoptimized /></div> : <div className={`news-visual tone-${item.tone || ["red", "green", "blue"][index % 3]}`}><span className="news-visual-mark"><Icon name="building" size={30} /></span><span className="news-category">{t(item.category || "सूचना")}</span></div>}
             <div className="news-card-body">
               <span className="news-date"><Icon name="clock" size={14} /> {formatDate(item.createdAt, language, t)}</span>
